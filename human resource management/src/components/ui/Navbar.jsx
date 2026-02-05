@@ -1,6 +1,8 @@
 import { FaBell, FaCog, FaEnvelope } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = ({ searchValue, onSearchChange, profile }) => {
+  const navigate = useNavigate();
   return (
     <div className="flex items-center justify-between bg-white shadow px-6 py-3">
       {/* Left: Search */}
@@ -33,7 +35,9 @@ const Navbar = ({ searchValue, onSearchChange, profile }) => {
         </div>
 
         {/* Settings */}
-        <FaCog className="text-gray-600 text-xl cursor-pointer" />
+        <div onClick={() => navigate("/settings")}>
+          <FaCog className="text-gray-600 text-xl cursor-pointer" />
+        </div>
 
         {/* Profile */}
         <div className="flex items-center gap-2 cursor-pointer">

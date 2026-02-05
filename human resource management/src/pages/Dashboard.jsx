@@ -162,6 +162,7 @@ const Dashboard = () => {
             data={employees}
             top={5}
             statusColors={statusColors}
+            viewDetailLink="/employees"
           />
           <DataTable
             title="Leave Requests"
@@ -169,6 +170,7 @@ const Dashboard = () => {
             data={leaves}
             top={5}
             statusColors={statusColors}
+            viewDetailLink="/leave"
           />
         </div>
 
