@@ -13,7 +13,7 @@ export const API_PATH = {
     UPDATE: (id) => `/departments/${id}`,
     DELETE: (id) => `/departments/${id}`,
   },
-  POSITION: {
+  POSITIONS: {
     GET_ALL: "/positions",
     GET_BY_ID: (id) => `/positions/${id}`,
     CREATE: "/positions",
