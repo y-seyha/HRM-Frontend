@@ -1,4 +1,4 @@
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaTachometerAlt,
   FaUsers,
@@ -9,16 +9,10 @@ import {
   FaCog,
   FaSignOutAlt,
 } from "react-icons/fa";
+import { logout } from "../../utils/auth";
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    // Clear user session / token here
-    localStorage.removeItem("userToken");
-    navigate("/login"); // redirect to login page
-  };
 
   const menuItems = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/" },
@@ -55,7 +49,7 @@ const Sidebar = () => {
 
       <div className="p-4 border-t border-gray-700">
         <button
-          onClick={handleLogout}
+          onClick={logout}
           className="flex items-center gap-3 w-full p-3 rounded-md hover:bg-red-600 transition-colors"
         >
           <FaSignOutAlt />
