@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
 import MainLayout from "../components/Layouts/DashboardLayout";
 import PageHeader from "../components/ui/PageHeader";
 import { axiosInstance } from "../api/axiosInstance";
 import { API_PATH } from "../api/api";
-import { formatDate } from "../utils/helper";
 import AddEmployeeModal from "../components/Employee/AddEmployeeModal";
+import EmployeeTable from "../components/Employee/EmployeeTable";
 import ConfirmationModal from "../components/Employee/ConfirmationModal";
 
 const Employees = () => {
@@ -22,7 +21,7 @@ const Employees = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
 
-  // Load positions ONCE
+  // Load positions once
   useEffect(() => {
     const loadPositions = async () => {
       try {
@@ -35,7 +34,7 @@ const Employees = () => {
     loadPositions();
   }, []);
 
-  // Load employees ONCE
+  // Load employees once
   useEffect(() => {
     const loadEmployees = async () => {
       try {
@@ -58,7 +57,7 @@ const Employees = () => {
     loadEmployees();
   }, []);
 
-  // Filtered employees
+  // Filtered employees based on search and filters
   const filteredEmployees = employees.filter((emp) => {
     const fullName = `${emp.first_name} ${emp.last_name}`;
     const matchesSearch =
@@ -72,6 +71,7 @@ const Employees = () => {
     return matchesSearch && matchesDept && matchesStatus;
   });
 
+  // Delete employee handlers
   const handleDeleteClick = (id) => {
     setDeleteId(id);
     setIsConfirmOpen(true);
@@ -100,12 +100,12 @@ const Employees = () => {
           onSearchChange={(e) => setSearch(e.target.value)}
           buttonText="Add Employee"
           onButtonClick={() => {
-            setEditingEmployee(null); // clear editing when adding
+            setEditingEmployee(null);
             setIsModalOpen(true);
           }}
         />
 
-        {/* Modal */}
+        {/* Add / Edit Modal */}
         {isModalOpen && (
           <AddEmployeeModal
             onClose={() => {
@@ -164,7 +164,7 @@ const Employees = () => {
           </select>
         </div>
 
-        {/* Loading / Error / No Data */}
+        {/* Loading / Error / Table */}
         {loading ? (
           <p className="text-center text-gray-500 mt-8">Loading employees...</p>
         ) : error ? (
@@ -172,93 +172,17 @@ const Employees = () => {
         ) : filteredEmployees.length === 0 ? (
           <p className="text-center text-gray-500 mt-8">No employees found.</p>
         ) : (
-          <div className="flex flex-col space-y-2">
-            {/* Table Header */}
-            <div className="hidden md:flex bg-gray-100 text-gray-600 font-semibold rounded-t-lg px-4 py-2">
-              <div className="w-1/12">NO</div>
-              <div className="w-1/12">ID</div>
-              <div className="w-1/12">Code</div>
-              <div className="w-2/12">Name</div>
-              <div className="w-2/12">Email</div>
-              <div className="w-1/12">Phone</div>
-              <div className="w-1/12">DOB</div>
-              <div className="w-1/12">Hire</div>
-              <div className="w-2/12">Dept / Pos</div>
-              <div className="w-1/12">Status</div>
-              <div className="w-1/12 text-right">Actions</div>
-            </div>
-
-            {/* Table Rows */}
-            {filteredEmployees.map((emp, idx) => (
-              <div
-                key={emp.id}
-                className="flex flex-col md:flex-row bg-white border-b border-gray-200 hover:bg-gray-50 px-4 py-3 md:items-center transition"
-              >
-                <div className="w-full md:w-1/12 font-medium text-gray-700">
-                  {idx + 1}
-                </div>
-                <div className="w-full md:w-1/12 text-gray-600">{emp.id}</div>
-                <div className="w-full md:w-1/12 text-gray-600">
-                  {emp.employee_code}
-                </div>
-                <div className="w-full md:w-2/12 font-medium text-gray-800">
-                  {emp.first_name} {emp.last_name}
-                </div>
-                <div className="w-full md:w-2/12 text-gray-600">
-                  {emp.email}
-                </div>
-                <div className="w-full md:w-1/12 text-gray-600">
-                  {emp.phone || "-"}
-                </div>
-                <div className="w-full md:w-1/12 text-gray-600">
-                  {formatDate(emp.date_of_birth)}
-                </div>
-                <div className="w-full md:w-1/12 text-gray-600">
-                  {formatDate(emp.hire_date)}
-                </div>
-                <div className="w-full md:w-2/12 text-gray-600">
-                  {emp.department_name || "Unassigned"} /{" "}
-                  {emp.position_name || "Unassigned"}
-                </div>
-                <div className="w-full md:w-1/12 flex justify-center md:justify-start">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      emp.status === "Active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {emp.status}
-                  </span>
-                </div>
-                <div className="w-full md:w-1/12 flex justify-end gap-2 mt-2 md:mt-0">
-                  <button
-                    className="text-blue-600 hover:text-blue-800 transition"
-                    onClick={() => {
-                      setEditingEmployee(emp);
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    <FaEdit />
-                  </button>
-
-                  <ConfirmationModal
-                    isOpen={isConfirmOpen}
-                    onClose={() => setIsConfirmOpen(false)}
-                    onConfirm={handleDeleteConfirm}
-                    title="Delete Employee"
-                    message="Are you sure you want to delete this employee? This action cannot be undone."
-                  />
-                  <button
-                    className="text-red-600 hover:text-red-800 transition"
-                    onClick={() => handleDeleteClick(emp.id)}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <EmployeeTable
+            employees={filteredEmployees}
+            onEdit={(emp) => {
+              setEditingEmployee(emp);
+              setIsModalOpen(true);
+            }}
+            onDelete={handleDeleteClick}
+            isConfirmOpen={isConfirmOpen}
+            setIsConfirmOpen={setIsConfirmOpen}
+            handleDeleteConfirm={handleDeleteConfirm}
+          />
         )}
       </div>
     </MainLayout>
