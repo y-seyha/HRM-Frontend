@@ -8,8 +8,6 @@ const LeaveModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const storedUser = localStorage.getItem("user");
   const currentUser = storedUser ? JSON.parse(storedUser) : null;
   const isAdmin = currentUser?.role === "admin";
-  console.log("Current User", currentUser);
-  console.log("Current User", isAdmin);
 
   const isEdit = !!editData;
 
