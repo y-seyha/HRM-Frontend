@@ -39,6 +39,7 @@ export const API_PATH = {
     GET_BY_ID: (id) => `/attendance/${id}`, // admin only
     DELETE: (id) => `/attendance/${id}`, // admin only
     CHECK_IN: "/attendance/check-in", // employee + admin
+    UPDATE: (id) => `/attendance/${id}`, // admin only
     CHECK_OUT: (id) => `/attendance/check-out/${id}`, // employee + admin
     MONTHLY_REPORT: (employee_id) => `/attendance/report/${employee_id}`, // admin only
     TOTAL_HOURS: (employee_id) => `/attendance/total-hours/${employee_id}`, // employee + admin
@@ -47,6 +48,7 @@ export const API_PATH = {
     GET_ALL: "/leaves", // admin + employee
     GET_BY_ID: (id) => `/leaves/${id}`, // admin + employee
     CREATE: "/leaves", // admin + employee
+
     GET_BY_EMPLOYEE: (employee_id) => `/leaves/employee/${employee_id}`, // ownership check
     APPROVE_REJECT: (id) => `/leaves/approve-reject/${id}`, // admin only
     DELETE: (id) => `/leaves/${id}`, // admin only
