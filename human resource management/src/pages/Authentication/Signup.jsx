@@ -44,10 +44,12 @@ const Signup = () => {
     try {
       const res = await axiosInstance.post(API_PATH.AUTH.REGISTER, payload);
 
-      const { token, role } = res.data;
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      // Extract JWT and user from nested object
+      const jwt = res.data.token.token; // actual JWT string
+      const user = res.data.token.user; // user object
 
+      localStorage.setItem("token", jwt);
+      localStorage.setItem("user", JSON.stringify(user));
       toast.success(
         "Account created successfully! Redirecting to Dashboard...",
       );

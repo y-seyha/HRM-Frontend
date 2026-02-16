@@ -53,13 +53,13 @@ export const API_PATH = {
   },
 
   PAYROLL: {
-    GET_ALL: "/payroll",
-    GET_BY_ID: (id) => `/payroll/${id}`,
-    CREATE: "/payroll",
-    UPDATE: (id) => `/payroll/${id}`,
-    DELETE: (id) => `/payroll/${id}`,
-    REPORT_MONTHLY: "/payroll/report/monthly",
-    REPORT_YEARLY: "/payroll/report/yearly",
-    DEDUCT_LEAVE: "/payroll/deduct-leave",
+    GET_ALL: "/payment",
+    GET_BY_ID: (id) => `/payment/${id}`,
+    CREATE: "/payment",
+    UPDATE: (id) => `/payment/${id}`,
+    DELETE: (id) => `/payment/${id}`,
+    REPORT_MONTHLY: "/payment/report/monthly",
+    REPORT_YEARLY: "/payment/report/yearly",
+    DEDUCT_LEAVE: "/payment/deduct-leave",
   },
 };
