@@ -44,12 +44,12 @@ export const API_PATH = {
     TOTAL_HOURS: (employee_id) => `/attendance/total-hours/${employee_id}`, // employee + admin
   },
   LEAVE_REQUEST: {
-    GET_ALL: "/leave-requests", // admin + employee
-    GET_BY_ID: (id) => `/leave-requests/${id}`, // admin + employee
-    CREATE: "/leave-requests", // admin + employee
-    GET_BY_EMPLOYEE: (employee_id) => `/leave-requests/employee/${employee_id}`, // ownership check
-    APPROVE_REJECT: (id) => `/leave-requests/approve-reject/${id}`, // admin only
-    DELETE: (id) => `/leave-requests/${id}`, // admin only
+    GET_ALL: "/leaves", // admin + employee
+    GET_BY_ID: (id) => `/leaves/${id}`, // admin + employee
+    CREATE: "/leaves", // admin + employee
+    GET_BY_EMPLOYEE: (employee_id) => `/leaves/employee/${employee_id}`, // ownership check
+    APPROVE_REJECT: (id) => `/leaves/approve-reject/${id}`, // admin only
+    DELETE: (id) => `/leaves/${id}`, // admin only
   },
 
   PAYROLL: {

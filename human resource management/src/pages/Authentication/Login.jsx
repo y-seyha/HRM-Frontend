@@ -28,11 +28,12 @@ const Login = () => {
         password: formData.password,
       });
 
-      const { token, role } = res.data;
+      // Extract JWT and user from nested object
+      const jwt = res.data.token.token; // actual JWT string
+      const user = res.data.token.user; // user object
 
-      // Save token & role in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", role);
+      localStorage.setItem("token", jwt);
+      localStorage.setItem("user", JSON.stringify(user));
 
       toast.success("Login successful!");
       navigate("/"); // redirect to dashboard
