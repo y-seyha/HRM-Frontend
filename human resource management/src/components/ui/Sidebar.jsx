@@ -17,7 +17,7 @@ const Sidebar = () => {
   const menuItems = [
     { name: "Dashboard", icon: <FaTachometerAlt />, path: "/" },
     { name: "Employees", icon: <FaUsers />, path: "/employees" },
-    { name: "Leave Management", icon: <FaClipboardList />, path: "/leave" },
+    { name: "Leave ", icon: <FaClipboardList />, path: "/leave" },
     { name: "Payroll", icon: <FaMoneyBill />, path: "/payroll" },
     { name: "Attendance", icon: <FaCalendarAlt />, path: "/attendance" },
     { name: "Reports", icon: <FaChartBar />, path: "/reports" },

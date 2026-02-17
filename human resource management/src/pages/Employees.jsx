@@ -5,7 +5,6 @@ import { axiosInstance } from "../api/axiosInstance";
 import { API_PATH } from "../api/api";
 import AddEmployeeModal from "../components/Employee/AddEmployeeModal";
 import EmployeeTable from "../components/Employee/EmployeeTable";
-import ConfirmationModal from "../components/Employee/ConfirmationModal";
 
 const Employees = () => {
   const [search, setSearch] = useState("");

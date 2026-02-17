@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Chart as ChartJS,
@@ -19,7 +18,6 @@ import {
 } from "react-icons/fa";
 
 import MainLayout from "../components/Layouts/DashboardLayout";
-import Navbar from "../components/ui/Navbar";
 import KpiCard from "../components/ui/KpiCard";
 import DataTable from "../components/ui/DataTable";
 import ChartWrapper from "../components/ui/ChartWrapper";
@@ -41,7 +39,7 @@ const Dashboard = () => {
   const [employees, setEmployees] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [attendance, setAttendance] = useState([]);
-  const [payrollTotal, setPayrollTotal] = useState(0); //  use a single value
+  const [payrollTotal, setPayrollTotal] = useState(0); 
   const [loading, setLoading] = useState({
     employees: true,
     leaves: true,
@@ -63,7 +61,7 @@ const Dashboard = () => {
         const empRes = await axiosInstance.get(API_PATH.EMPLOYEES.GET_ALL);
         const formattedEmployees = empRes.data.map((e) => ({
           ...e,
-          name: `${e.first_name} ${e.last_name}`, 
+          name: `${e.first_name} ${e.last_name}`,
         }));
         setEmployees(formattedEmployees);
 
@@ -150,7 +148,7 @@ const Dashboard = () => {
     },
   ];
 
-  //Attendance Chart 
+  //Attendance Chart
   const lineData = {
     labels: attendance.map((d) => d.date),
     datasets: [
@@ -203,7 +201,6 @@ const Dashboard = () => {
 
   return (
     <MainLayout>
-      <Navbar />
       <div className="bg-gradient-to-r from-gray-100 to-blue-50 p-6 min-h-screen">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Dashboard</h1>
 
