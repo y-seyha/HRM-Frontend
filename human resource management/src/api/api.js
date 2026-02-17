@@ -63,5 +63,6 @@ export const API_PATH = {
     REPORT_MONTHLY: "/payment/report/monthly",
     REPORT_YEARLY: "/payment/report/yearly",
     DEDUCT_LEAVE: "/payment/deduct-leave",
+    TOTAL: "/payment/total",
   },
 };
