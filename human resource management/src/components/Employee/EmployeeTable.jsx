@@ -10,9 +10,15 @@ const EmployeeTable = ({
   isConfirmOpen,
   setIsConfirmOpen,
   handleDeleteConfirm,
+  label = "", // optional label prop
 }) => {
   return (
     <div className="flex flex-col space-y-2">
+      {/* Optional Label */}
+      {label && (
+        <h2 className="text-xl font-semibold text-gray-800">{label}</h2>
+      )}
+
       {/* Table Header */}
       <div className="hidden md:flex bg-gray-100 text-gray-600 font-semibold rounded-t-lg px-4 py-2">
         <div className="w-1/12">NO</div>

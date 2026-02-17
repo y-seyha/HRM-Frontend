@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import MainLayout from "../components/Layouts/DashboardLayout";
 import KpiCard from "../components/ui/KpiCard";
 import { CSVLink } from "react-csv";
@@ -15,78 +15,107 @@ import {
   Legend,
 } from "recharts";
 import { FaUsers, FaUserClock, FaUserCheck } from "react-icons/fa";
+import { axiosInstance } from "../api/axiosInstance";
+import { API_PATH } from "../api/api";
+import EmployeeTable from "../components/Employee/EmployeeTable";
+import { formatCurrency, formatDate } from "../utils/helper";
 
 const Reports = () => {
+  const [employee, setEmployee] = useState([]);
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [payroll, setPayroll] = useState([]);
+
+  const [loading, setLoading] = useState({
+    employees: true,
+    leaves: true,
+    attendance: true,
+    payroll: true,
+  });
+
   const [filterDept, setFilterDept] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  // Example Departments
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+
   const departments = ["IT", "HR", "Sales", "Marketing", "Finance"];
+  const colors = ["#4ade80", "#facc15", "#f87171"];
 
-  // Metrics Data
-  const employees = [
-    { id: 1, name: "Alice", department: "IT", status: "Active" },
-    { id: 2, name: "Bob", department: "HR", status: "On Leave" },
-    { id: 3, name: "Charlie", department: "Sales", status: "Active" },
-    { id: 4, name: "David", department: "Marketing", status: "Active" },
-    { id: 5, name: "Eva", department: "Finance", status: "On Leave" },
-  ];
+  // Fetch all data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Employees
+        setLoading((prev) => ({ ...prev, employees: true }));
+        const empRes = await axiosInstance.get(API_PATH.EMPLOYEES.GET_ALL);
+        setEmployee(empRes.data);
 
-  const attendance = [
-    { date: "2026-02-01", Present: 4, Absent: 1, Late: 0 },
-    { date: "2026-02-02", Present: 3, Absent: 2, Late: 0 },
-    { date: "2026-02-03", Present: 5, Absent: 0, Late: 1 },
-    { date: "2026-02-04", Present: 4, Absent: 1, Late: 0 },
-  ];
+        // Leaves
+        setLoading((prev) => ({ ...prev, leaves: true }));
+        const leaveRes = await axiosInstance.get(
+          API_PATH.LEAVE_REQUEST.GET_ALL,
+        );
+        setLeaveRequests(leaveRes.data);
 
-  const leaveRequests = [
-    {
-      id: 1,
-      name: "Bob",
-      type: "Sick",
-      department: "HR",
-      start: "2026-02-05",
-      end: "2026-02-06",
-      status: "Approved",
-    },
-    {
-      id: 2,
-      name: "Eva",
-      type: "Annual",
-      department: "Finance",
-      start: "2026-02-07",
-      end: "2026-02-08",
-      status: "Pending",
-    },
-  ];
+        // Attendance
+        setLoading((prev) => ({ ...prev, attendance: true }));
+        const attRes = await axiosInstance.get(API_PATH.ATTENDANCE.GET_ALL);
 
-  const payrollData = [
-    {
-      id: 1,
-      name: "Alice",
-      department: "IT",
-      net: 4100,
-      status: "Paid",
-      date: "2026-02-01",
-    },
-    {
-      id: 2,
-      name: "Bob",
-      department: "HR",
-      net: 3450,
-      status: "Pending",
-      date: "-",
-    },
-  ];
+        const chartData = {};
+        attRes.data.forEach((rec) => {
+          const date = rec.attendance_date.split("T")[0];
+          if (!chartData[date])
+            chartData[date] = { date, Present: 0, Absent: 0, Late: 0 };
+          chartData[date][rec.status] = (chartData[date][rec.status] || 0) + 1;
+        });
+        setAttendance(Object.values(chartData));
 
-  // Filtered leave requests
+        // Payroll
+        setLoading((prev) => ({ ...prev, payroll: true }));
+        const payrollRes = await axiosInstance.get(API_PATH.PAYROLL.GET_ALL);
+        setPayroll(payrollRes.data);
+      } catch (err) {
+        console.error("Failed to fetch reports:", err);
+      } finally {
+        setLoading({
+          employees: false,
+          leaves: false,
+          attendance: false,
+          payroll: false,
+        });
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleEdit = (emp) => console.log("Edit clicked:", emp);
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setIsConfirmOpen(true);
+  };
+  const handleDeleteConfirm = () => {
+    setEmployee((prev) => prev.filter((e) => e.id !== deleteId));
+    setIsConfirmOpen(false);
+    setDeleteId(null);
+  };
+
+  // Filtered leaves
   const filteredLeaves = leaveRequests.filter(
     (l) =>
-      (filterDept ? l.department === filterDept : true) &&
-      (filterStatus ? l.status === filterStatus : true),
+      (!filterDept || l.department === filterDept) &&
+      (!filterStatus || l.status === filterStatus),
   );
 
-  const colors = ["#4ade80", "#facc15", "#f87171"]; // Green, Yellow, Red
+  // Prepare PieChart data
+  const leaveData = filteredLeaves.reduce((acc, leave) => {
+    const type = leave.leave_type || "Other";
+    const existing = acc.find((i) => i.name === type);
+    if (existing) existing.value += 1;
+    else acc.push({ name: type, value: 1 });
+    return acc;
+  }, []);
 
   return (
     <MainLayout>
@@ -100,21 +129,21 @@ const Reports = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <KpiCard
             title="Total Employees"
-            value={employees.length}
+            value={employee.length}
             bgColor="bg-gray-800"
-            icon={FaUsers} // total employees icon
+            icon={FaUsers}
           />
           <KpiCard
             title="Employees on Leave"
-            value={employees.filter((e) => e.status === "On Leave").length}
+            value={employee.filter((e) => e.status === "On Leave").length}
             bgColor="bg-red-600"
-            icon={FaUserClock} // on leave icon
+            icon={FaUserClock}
           />
           <KpiCard
             title="Active Employees"
-            value={employees.filter((e) => e.status === "Active").length}
+            value={employee.filter((e) => e.status === "Active").length}
             bgColor="bg-green-600"
-            icon={FaUserCheck} // active icon
+            icon={FaUserCheck}
           />
         </div>
 
@@ -151,90 +180,85 @@ const Reports = () => {
           </CSVLink>
         </div>
 
+        {/* Employee Table */}
+        <div className="bg-white border border-gray-300 rounded-lg p-4 mb-6">
+          <EmployeeTable
+            employees={employee.map((e) => ({
+              id: e.id,
+              employee_code: e.employee_code || "-",
+              first_name: e.first_name || "-",
+              last_name: e.last_name || "-",
+              email: e.email || "-",
+              phone: e.phone || "-",
+              date_of_birth: e.date_of_birth || null,
+              hire_date: e.hire_date || null,
+              department_name: e.department_name || "Unassigned",
+              position_name: e.position_name || "Unassigned",
+              status: e.status || "Active",
+            }))}
+            onEdit={handleEdit}
+            onDelete={handleDeleteClick}
+            isConfirmOpen={isConfirmOpen}
+            setIsConfirmOpen={setIsConfirmOpen}
+            handleDeleteConfirm={handleDeleteConfirm}
+            showActions={false}
+            label="Employee"
+          />
+        </div>
+
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Attendance Line Chart */}
           <div className="bg-white shadow rounded-lg p-4">
             <h2 className="font-bold text-gray-700 mb-2">Attendance Trend</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={attendance}>
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="Present" stroke="#4ade80" />
-                <Line type="monotone" dataKey="Absent" stroke="#f87171" />
-                <Line type="monotone" dataKey="Late" stroke="#facc15" />
-              </LineChart>
-            </ResponsiveContainer>
+            {loading.attendance ? (
+              <p className="text-gray-500">Loading attendance data...</p>
+            ) : attendance.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={attendance}>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="Present" stroke="#4ade80" />
+                  <Line type="monotone" dataKey="Absent" stroke="#f87171" />
+                  <Line type="monotone" dataKey="Late" stroke="#facc15" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-500">No attendance data available.</p>
+            )}
           </div>
 
           {/* Leave Pie Chart */}
           <div className="bg-white shadow rounded-lg p-4">
             <h2 className="font-bold text-gray-700 mb-2">Leave by Type</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={filteredLeaves}
-                  dataKey="id"
-                  nameKey="type"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  label={(entry) => entry.type}
-                >
-                  {filteredLeaves.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={colors[index % colors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {loading.leaves ? (
+              <p>Loading leave data...</p>
+            ) : leaveData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={leaveData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => `${entry.name} (${entry.value})`}
+                  >
+                    {leaveData.map((entry, index) => (
+                      <Cell key={index} fill={colors[index % colors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-gray-500">No leave data available.</p>
+            )}
           </div>
-        </div>
-
-        {/* Detailed Tables */}
-        <div className="bg-white shadow rounded overflow-x-auto mb-6">
-          <table className="min-w-full text-left divide-y divide-gray-200">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="p-3">Employee</th>
-                <th className="p-3">Department</th>
-                <th className="p-3">Leave Type</th>
-                <th className="p-3">Start</th>
-                <th className="p-3">End</th>
-                <th className="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredLeaves.map((l) => (
-                <tr key={l.id} className="hover:bg-gray-50 transition">
-                  <td className="p-3">{l.name}</td>
-                  <td className="p-3">{l.department}</td>
-                  <td className="p-3">{l.type}</td>
-                  <td className="p-3">{l.start}</td>
-                  <td className="p-3">{l.end}</td>
-                  <td className="p-3">
-                    <span
-                      className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        l.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : l.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {l.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
 
         {/* Payroll Table */}
@@ -250,25 +274,37 @@ const Reports = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {payrollData.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50 transition">
-                  <td className="p-3">{p.name}</td>
-                  <td className="p-3">{p.department}</td>
-                  <td className="p-3">${p.net}</td>
-                  <td className="p-3">
-                    <span
-                      className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                        p.status === "Paid"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
+              {loading.payroll ? (
+                <tr>
+                  <td colSpan={5} className="p-3 text-center">
+                    Loading payroll data...
                   </td>
-                  <td className="p-3">{p.date}</td>
                 </tr>
-              ))}
+              ) : payroll.length > 0 ? (
+                payroll.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50 transition">
+                    <td className="p-3">
+                      {p.employee_name || `${p.first_name} ${p.last_name}`}
+                    </td>
+                    <td className="p-3">{p.department_name || "Unassigned"}</td>
+                    <td className="p-3">{formatCurrency(p.net_salary)}</td>
+                    <td className="p-3">
+                      <span
+                        className={`px-3 py-1 text-sm font-semibold rounded-full ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                      >
+                        {p.status || "-"}
+                      </span>
+                    </td>
+                    <td className="p-3">{formatDate(p.payment_date)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="p-3 text-center">
+                    No payroll data found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

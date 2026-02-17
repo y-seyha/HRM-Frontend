@@ -18,3 +18,10 @@ export const formatDateForInput = (dateStr) => {
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`; // yyyy-MM-dd
 };
+
+export const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount || 0);
+};
