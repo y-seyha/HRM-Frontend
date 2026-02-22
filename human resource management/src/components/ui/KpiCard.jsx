@@ -1,5 +1,3 @@
-import React from "react";
-
 const KpiCard = ({ title, value, icon: Icon, bgColor }) => {
   return (
     <div
