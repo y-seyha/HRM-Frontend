@@ -1,31 +1,37 @@
-import { useEffect, useState } from "react";
-import { axiosInstance } from "../../api/axiosInstance";
-import { API_PATH } from "../../api/api";
+import { useState, useEffect } from "react";
+import { axiosInstance } from "../api/axiosInstance";
+import { API_PATH } from "../api/api";
 
 export const useLeaves = () => {
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchLeave = async () => {
+  const fetchLeaves = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const res = await axiosInstance.get(API_PATH.LEAVE_REQUEST.GET_ALL);
       setLeaveRequests(res.data);
     } catch (err) {
-      console.error("Fetch leaves error", err);
+      console.error("Fetch leaves error:", err);
+      setError("Failed to load leave requests.");
     } finally {
       setLoading(false);
     }
   };
 
   const deleteLeave = async (id) => {
-    await axiosInstance.delete(API_PATH.LEAVE_REQUEST.DELETE(id));
-    setLeaveRequests((prev) => prev.filter((l) => l.id !== id));
+    try {
+      await axiosInstance.delete(API_PATH.LEAVE_REQUEST.DELETE(id));
+      setLeaveRequests((prev) => prev.filter((l) => l.id !== id));
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
   useEffect(() => {
-    fetchLeave();
+    fetchLeaves();
   }, []);
 
-  return { leaveRequests, loading, fetchLeave, deleteLeave };
+  return { leaveRequests, fetchLeaves, deleteLeave, loading, error };
 };
