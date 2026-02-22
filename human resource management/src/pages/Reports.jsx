@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
 import MainLayout from "../components/Layouts/DashboardLayout";
 import KpiCard from "../components/ui/KpiCard";
 import { CSVLink } from "react-csv";
@@ -15,80 +15,20 @@ import {
   Legend,
 } from "recharts";
 import { FaUsers, FaUserClock, FaUserCheck } from "react-icons/fa";
-import { axiosInstance } from "../api/axiosInstance";
-import { API_PATH } from "../api/api";
 import EmployeeTable from "../components/Employee/EmployeeTable";
-import { formatCurrency, formatDate } from "../utils/helper";
+import { useReports } from "../hooks/useReport";
 
 const Reports = () => {
-  const [employee, setEmployee] = useState([]);
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [payroll, setPayroll] = useState([]);
-
-  const [loading, setLoading] = useState({
-    employees: true,
-    leaves: true,
-    attendance: true,
-    payroll: true,
-  });
+  const { employees, leaveRequests, attendance, payroll, loading } =
+    useReports();
 
   const [filterDept, setFilterDept] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
+  const [_deleteId, setDeleteId] = useState(null);
 
   const departments = ["IT", "HR", "Sales", "Marketing", "Finance"];
   const colors = ["#4ade80", "#facc15", "#f87171"];
-
-  // Fetch all data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Employees
-        setLoading((prev) => ({ ...prev, employees: true }));
-        const empRes = await axiosInstance.get(API_PATH.EMPLOYEES.GET_ALL);
-        setEmployee(empRes.data);
-
-        // Leaves
-        setLoading((prev) => ({ ...prev, leaves: true }));
-        const leaveRes = await axiosInstance.get(
-          API_PATH.LEAVE_REQUEST.GET_ALL,
-        );
-        setLeaveRequests(leaveRes.data);
-
-        // Attendance
-        setLoading((prev) => ({ ...prev, attendance: true }));
-        const attRes = await axiosInstance.get(API_PATH.ATTENDANCE.GET_ALL);
-
-        const chartData = {};
-        attRes.data.forEach((rec) => {
-          const date = rec.attendance_date.split("T")[0];
-          if (!chartData[date])
-            chartData[date] = { date, Present: 0, Absent: 0, Late: 0 };
-          chartData[date][rec.status] = (chartData[date][rec.status] || 0) + 1;
-        });
-        setAttendance(Object.values(chartData));
-
-        // Payroll
-        setLoading((prev) => ({ ...prev, payroll: true }));
-        const payrollRes = await axiosInstance.get(API_PATH.PAYROLL.GET_ALL);
-        setPayroll(payrollRes.data);
-      } catch (err) {
-        console.error("Failed to fetch reports:", err);
-      } finally {
-        setLoading({
-          employees: false,
-          leaves: false,
-          attendance: false,
-          payroll: false,
-        });
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const handleEdit = (emp) => console.log("Edit clicked:", emp);
   const handleDeleteClick = (id) => {
@@ -96,26 +36,32 @@ const Reports = () => {
     setIsConfirmOpen(true);
   };
   const handleDeleteConfirm = () => {
-    setEmployee((prev) => prev.filter((e) => e.id !== deleteId));
-    setIsConfirmOpen(false);
+    // Remove employee locally
     setDeleteId(null);
+    setIsConfirmOpen(false);
   };
 
-  // Filtered leaves
-  const filteredLeaves = leaveRequests.filter(
-    (l) =>
-      (!filterDept || l.department === filterDept) &&
-      (!filterStatus || l.status === filterStatus),
+  // Filter leaves by department and status
+  const filteredLeaves = useMemo(
+    () =>
+      leaveRequests.filter(
+        (l) =>
+          (!filterDept || l.department === filterDept) &&
+          (!filterStatus || l.status === filterStatus),
+      ),
+    [leaveRequests, filterDept, filterStatus],
   );
 
   // Prepare PieChart data
-  const leaveData = filteredLeaves.reduce((acc, leave) => {
-    const type = leave.leave_type || "Other";
-    const existing = acc.find((i) => i.name === type);
-    if (existing) existing.value += 1;
-    else acc.push({ name: type, value: 1 });
-    return acc;
-  }, []);
+  const leaveData = useMemo(() => {
+    return filteredLeaves.reduce((acc, leave) => {
+      const type = leave.leave_type || "Other";
+      const existing = acc.find((i) => i.name === type);
+      if (existing) existing.value += 1;
+      else acc.push({ name: type, value: 1 });
+      return acc;
+    }, []);
+  }, [filteredLeaves]);
 
   return (
     <MainLayout>
@@ -129,19 +75,19 @@ const Reports = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <KpiCard
             title="Total Employees"
-            value={employee.length}
+            value={employees.length}
             bgColor="bg-gray-800"
             icon={FaUsers}
           />
           <KpiCard
             title="Employees on Leave"
-            value={employee.filter((e) => e.status === "On Leave").length}
+            value={employees.filter((e) => e.status === "On Leave").length}
             bgColor="bg-red-600"
             icon={FaUserClock}
           />
           <KpiCard
             title="Active Employees"
-            value={employee.filter((e) => e.status === "Active").length}
+            value={employees.filter((e) => e.status === "Active").length}
             bgColor="bg-green-600"
             icon={FaUserCheck}
           />
@@ -183,7 +129,7 @@ const Reports = () => {
         {/* Employee Table */}
         <div className="bg-white border border-gray-300 rounded-lg p-4 mb-6">
           <EmployeeTable
-            employees={employee.map((e) => ({
+            employees={employees.map((e) => ({
               id: e.id,
               employee_code: e.employee_code || "-",
               first_name: e.first_name || "-",
@@ -283,19 +229,21 @@ const Reports = () => {
               ) : payroll.length > 0 ? (
                 payroll.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 transition">
-                    <td className="p-3">
-                      {p.employee_name || `${p.first_name} ${p.last_name}`}
-                    </td>
+                    <td className="p-3">{p.employee_name}</td>
                     <td className="p-3">{p.department_name || "Unassigned"}</td>
-                    <td className="p-3">{formatCurrency(p.net_salary)}</td>
+                    <td className="p-3">{p.net_salary}</td>
                     <td className="p-3">
                       <span
-                        className={`px-3 py-1 text-sm font-semibold rounded-full ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+                        className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                          p.status === "Paid"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
                       >
                         {p.status || "-"}
                       </span>
                     </td>
-                    <td className="p-3">{formatDate(p.payment_date)}</td>
+                    <td className="p-3">{p.payment_date}</td>
                   </tr>
                 ))
               ) : (
